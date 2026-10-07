@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة المكافآت | الأستاذ خليفة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+body{background:#0a1f18;color:#f8faf9;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:16px 10px}
+.app{width:100%;max-width:850px;background:#123026;border:2px solid #f39c12;border-radius:22px;padding:18px}
+.top{display:flex;margin-bottom:14px;border-bottom:1px solid rgba(241,196,15,.2);padding-bottom:10px}
+.tbtn{background:#f1c40f;color:#000;border:0;padding:9px 16px;border-radius:12px;font-weight:800;cursor:pointer;font-size:.95rem}
+h1{text-align:center;color:#f1c40f;font-size:1.8rem;font-weight:900;margin:6px 0 4px}
+.sub{text-align:center;color:#f1c40f;font-size:.9rem;margin-bottom:16px}
+.view{display:none}.view.on{display:block}
+label{display:block;font-size:.88rem;margin:10px 0 5px;color:#d1d5db}
+input,select,textarea{width:100%;padding:11px 13px;background:#0a1f18;border:1.5px solid rgba(241,196,15,.4);border-radius:12px;color:#fff;font-size:1rem;outline:0}
+.btn{width:100%;padding:13px;border:0;border-radius:13px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-size:1.02rem;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.gray{background:#444}.btn.sm{width:auto;padding:7px 14px;margin:0;font-size:.85rem}
+.btn:disabled{opacity:.6}
+#err{display:none;background:rgba(231,76,60,.25);border:1.5px solid #e74c3c;border-radius:12px;padding:10px;color:#ff8a80;font-weight:700;text-align:center;margin-bottom:12px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99;justify-content:center;align-items:center}
+.modal.on{display:flex}
+.mc{background:#123026;border:2px solid #f1c40f;border-radius:18px;padding:22px;width:90%;max-width:380px;text-align:center}
+.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(241,196,15,.2);border-radius:13px;padding:12px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px;background:rgba(0,0,0,.2)}
+td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{background:rgba(241,196,15,.2);color:#f1c40f}
+.tw{overflow-x:auto}
+.st{padding:2px 10px;border-radius:10px;font-size:.8rem;font-weight:700}
+.open{background:#1e8449}.closed{background:#922b21}.wait{background:#7d6608}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
+</head>
+<body>
+<div id="pm" class="modal"><div class="mc">
+<h3 style="color:#f1c40f;margin-bottom:10px">🔒 دخول الأستاذ</h3>
+<input type="password" id="pw" placeholder="كلمة المرور" style="text-align:center">
+<button class="btn" id="pwGo">دخول</button>
+<button class="btn gray" id="pwX">إلغاء</button>
+</div></div>
+
+<div class="app">
+<div class="top"><button class="tbtn" id="tOpen">🛡️ لوحة التحكم (الأستاذ)</button></div>
+<h1>مَنَصَّةُ المَكَافَآتِ</h1>
+<div class="sub">مادة العلوم الإسلامية | الأستاذ خليفة</div>
+<div id="err"></div>
+
+<div id="v1" class="view on">
+<label>اختر قسمك:</label><select id="cls"></select>
+<label>رمز القسم:</label><input id="ccode" placeholder="أدخل رمز قسمك">
+<button class="btn" id="b1">تأكيد القسم والدخول ←</button>
+</div>
+
+<div id="v2" class="view">
+<label>الاسم:</label><input id="fn" maxlength="30" placeholder="اسمك الشخصي">
+<label>اللقب:</label><input id="ln" maxlength="30" placeholder="لقبك">
+<button class="btn" id="b2">متابعة</button>
+</div>
+
+<div id="v3" class="view">
+<label style="text-align:center;font-size:1.05rem">أدخل رمز القسيمة:</label>
+<input id="code" style="text-align:center;font-size:1.2rem;letter-spacing:2px" placeholder="كود القسيمة">
+<button class="btn" id="b3">تحويل القسيمة إلى نقاط 💎</button>
+</div>
+
+<div id="v4" class="view" style="text-align:center">
+<div style="font-size:3.5rem">✅</div>
+<h2 id="wm" style="margin-top:8px"></h2>
+<p id="pt" style="margin-top:8px;font-size:1.3rem;color:#f1c40f;font-weight:700"></p>
+<p id="tt" style="margin-top:6px;color:#ccc"></p>
+<button class="btn" id="b4">إدخال قسيمة جديدة</button>
+</div>
+
+<div id="vt" class="view">
+<div class="row"><h3 style="color:#f1c40f">لوحة الأستاذ</h3><button class="btn gray sm" id="tOut">خروج</button></div>
+<div class="tabs"><button class="btn sm" id="tabS">التلاميذ</button><button class="btn gray sm" id="tabQ">التقاويم</button></div>
+
+<div id="ps">
+<div class="row" style="margin-bottom:10px"><select id="flt" style="flex:1"></select><button class="btn sm" id="rf">تحديث</button></div>
+<div id="stl"></div>
+</div>
+
+<div id="pq" style="display:none">
+<div class="card">
+<h4 style="color:#f1c40f">إنشاء / تعديل تقويم</h4>
+<label>رمز التقويم (إنجليزي بلا مسافات، مثل lesson1)</label><input id="qid" dir="ltr">
+<label>العنوان</label><input id="qti" placeholder="تقويم الدرس الأول">
+<label>الإجابات الصحيحة (واحدة في كل سطر بالترتيب)</label><textarea id="qan" rows="4" dir="ltr"></textarea>
+<div class="g2">
+<div><label>النقاط القصوى</label><input id="qmx" type="number" step="0.05" value="0.5"></div>
+<div></div>
+<div><label>يفتح</label><input id="qop" type="datetime-local"></div>
+<div><label>يُغلق</label><input id="qcl" type="datetime-local"></div>
+</div>
+<button class="btn" id="qsv">حفظ التقويم</button>
+</div>
+<div id="ql"></div>
+</div>
+</div>
+</div>
+
+<script>
+const CL=[["ad5z7eb3","2 آداب وفلسفة 3"],["f3id7xai","2 تسيير واقتصاد 3"],["ritwws5i","2 تسيير واقتصاد 2"],["vynajots","2 تقني رياضي 1"],["5qririln","2 علمي 3"],["afdw3t2k","1 ج م ع ت 7"],["gwsnatci","1 ج م ع ت 8"],["45pptqxn","1 ج م ع ت 9"],["2noo223m","1 ج م ع ت 10"],["enrt6unl","1 ج م آداب 7"]];
+const ERR={INVALID:'هذه القسيمة غير صحيحة!',NOT_YOURS:'هذه القسيمة ليست باسمك!',USED:'تم استخدام هذه القسيمة سابقاً!',CLOSED:'انتهى وقت التقويم، لا تُقبل قسيمته الآن.',MISSING:'بيانات ناقصة!',SERVER:'خطأ في الخادم، حاول مجدداً.',WRONG_PASSWORD:'كلمة المرور غير صحيحة!',BAD_DATES:'تواريخ الفتح/الإغلاق غير صحيحة.',BAD_ID:'رمز التقويم غير صالح.',NO_ANSWERS:'أدخل الإجابات الصحيحة.'};
+const $=id=>document.getElementById(id);
+const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const api=async(fn,body)=>{let r,d={};try{r=await fetch('/.netlify/functions/'+fn,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});d=await r.json()}catch(e){throw new Error('SERVER')}if(!r.ok)throw new Error(d.error||'SERVER');return d};
+const show=id=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));$(id).classList.add('on')};
+const err=m=>{const e=$('err');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3800)};
+let me=null,PW='',STU=[],QZ=[];
+
+$('cls').innerHTML='<option value="" disabled selected>-- اختر القسم --</option>'+CL.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('');
+$('flt').innerHTML='<option value="ALL">جميع الأقسام</option>'+CL.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('');
+
+$('b1').onclick=()=>{const s=$('cls').value,i=$('ccode').value.trim().toLowerCase();
+if(!s)return err('اختر القسم أولاً!');if(i!==s)return err('رمز القسم غير صحيح!');show('v2')};
+$('b2').onclick=()=>{const f=$('fn').value.trim(),l=$('ln').value.trim();
+if(!f||!l)return err('اكتب الاسم واللقب!');me={firstName:f,lastName:l,classCode:$('cls').value};show('v3')};
+$('b3').onclick=async()=>{const c=$('code').value.trim();if(!c)return err('أدخل كود القسيمة!');
+$('b3').disabled=true;
+try{const d=await api('redeem',{...me,code:c});
+$('wm').textContent='هنيئاً لك يا '+me.firstName+'!';
+$('pt').textContent='+'+d.points.toFixed(2)+' نقطة';
+$('tt').textContent='مجموعك: '+d.total.toFixed(2)+' نقطة';show('v4')}
+catch(e){err(ERR[e.message]||ERR.SERVER)}
+$('b3').disabled=false};
+$('b4').onclick=()=>{$('code').value='';show('v3')};
+
+$('tOpen').onclick=()=>{$('pm').classList.add('on');$('pw').focus()};
+$('pwX').onclick=()=>{$('pm').classList.remove('on');$('pw').value=''};
+$('pwGo').onclick=async()=>{const p=$('pw').value;if(!p)return;
+try{const d=await api('teacher',{password:p});PW=p;STU=d.students;$('pw').value='';
+$('pm').classList.remove('on');show('vt');rS();loadQ()}
+catch(e){alert(ERR[e.message]||ERR.SERVER)}};
+$('tOut').onclick=()=>{PW='';STU=[];QZ=[];show('v1')};
+$('tabS').onclick=()=>{$('ps').style.display='block';$('pq').style.display='none';$('tabS').classList.remove('gray');$('tabQ').classList.add('gray')};
+$('tabQ').onclick=()=>{$('pq').style.display='block';$('ps').style.display='none';$('tabQ').classList.remove('gray');$('tabS').classList.add('gray')};
+$('rf').onclick=async()=>{try{STU=(await api('teacher',{password:PW})).students;rS()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
+$('flt').onchange=rS;
+
+function rS(){const f=$('flt').value,L=STU.filter(s=>f==='ALL'||s.classCode===f);
+const nm=Object.fromEntries(CL);
+$('stl').innerHTML=L.length?L.map(s=>{const A=s.activities||[];
+const rows=A.length?A.map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.title)}</td><td><code>${esc(a.code)}</code></td><td>${esc(a.date)}</td><td style="color:#2ecc71">+${(+a.points||0).toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="5">لا أنشطة</td></tr>';
+return `<div class="card"><div class="row"><div><b>${esc(s.firstName)} ${esc(s.lastName)}</b> <span class="st wait">${esc(nm[s.classCode]||s.classCode)}</span></div><b style="color:#f1c40f;font-size:1.2rem">${(+s.totalPoints||0).toFixed(2)} ن</b></div><div class="tw"><table><tr><th>#</th><th>النشاط</th><th>القسيمة</th><th>التاريخ</th><th>النقاط</th></tr>${rows}</table></div></div>`}).join(''):'<p style="text-align:center;color:#aaa;padding:16px">لا يوجد تلاميذ بعد.</p>'}
+
+const status=q=>{const n=Date.now();if(q.active===false)return['closed','مقفل'];
+if(q.opensAt&&n<Date.parse(q.opensAt))return['wait','لم يبدأ'];
+if(q.closesAt&&n>Date.parse(q.closesAt))return['closed','انتهى'];return['open','مفتوح']};
+const loc=iso=>{const d=new Date(iso),o=d.getTimezoneOffset()*6e4;return new Date(d-o).toISOString().slice(0,16)};
+const fmt=iso=>iso?new Date(iso).toLocaleString('ar-DZ',{dateStyle:'short',timeStyle:'short'}):'-';
+
+function defDates(){const n=new Date();$('qop').value=loc(n);$('qcl').value=loc(new Date(n.getTime()+48*36e5))}
+defDates();
+
+async function loadQ(){try{QZ=(await api('quizzes',{password:PW,action:'list'})).quizzes;rQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}}
+function rQ(){$('ql').innerHTML=QZ.length?QZ.map((q,i)=>{const s=status(q);
+return `<div class="card"><div class="row"><div><b>${esc(q.title)}</b> <code>${esc(q.id)}</code></div><span class="st ${s[0]}">${s[1]}</span></div>
+<div style="font-size:.82rem;color:#bbb;margin:6px 0">من ${fmt(q.opensAt)} إلى ${fmt(q.closesAt)} | ${q.answers.length} أسئلة | ${q.maxPoints} ن</div>
+<div class="row"><button class="btn sm" onclick="edQ(${i})">تعديل</button><button class="btn sm ${q.active===false?'':'gray'}" onclick="tgQ(${i})">${q.active===false?'فتح':'قفل الآن'}</button></div></div>`}).join(''):'<p style="text-align:center;color:#aaa">لا توجد تقاويم.</p>'}
+window.edQ=i=>{const q=QZ[i];$('qid').value=q.id;$('qti').value=q.title;$('qan').value=q.answers.join('\n');$('qmx').value=q.maxPoints;$('qop').value=loc(q.opensAt);$('qcl').value=loc(q.closesAt);window.scrollTo(0,0)};
+window.tgQ=async i=>{const q=QZ[i];try{await api('quizzes',{password:PW,action:'toggle',quizId:q.id,active:q.active===false});loadQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
+$('qsv').onclick=async()=>{
+try{await api('quizzes',{password:PW,action:'save',quizId:$('qid').value.trim(),title:$('qti').value.trim(),
+answers:$('qan').value.split('\n'),maxPoints:$('qmx').value,
+opensAt:new Date($('qop').value).toISOString(),closesAt:new Date($('qcl').value).toISOString(),active:true});
+alert('تم الحفظ ✅');loadQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
+</script>
+</body>
+</html>
