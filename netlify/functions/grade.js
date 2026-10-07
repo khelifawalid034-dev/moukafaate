@@ -1,6 +1,13 @@
 const crypto = require('crypto');
 const { db, studentId, reply } = require('../lib');
 
+const quizStatus = (q, now = Date.now()) => {
+  if (q.active === false) return 'closed';
+  if (q.opensAt && now < Date.parse(q.opensAt)) return 'notstarted';
+  if (q.closesAt && now > Date.parse(q.closesAt)) return 'closed';
+  return 'open';
+};
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return reply(200, {});
   if (event.httpMethod !== 'POST') return reply(405, { error: 'METHOD' });
@@ -14,15 +21,22 @@ exports.handler = async (event) => {
   if (String(quizId).includes('/')) return reply(400, { error: 'BAD_QUIZ' });
 
   const quizSnap = await db.collection('quizzes').doc(String(quizId)).get();
-  if (!quizSnap.exists || quizSnap.data().active === false)
-    return reply(404, { error: 'NO_QUIZ' });
+  if (!quizSnap.exists) return reply(404, { error: 'NO_QUIZ' });
 
   const quiz = quizSnap.data();
+  const status = quizStatus(quiz);
+  if (status === 'notstarted') return reply(403, { error: 'NOT_STARTED', opensAt: quiz.opensAt });
+
   const key = quiz.answers || [];
   let correct = 0;
   key.forEach((a, i) => {
     if (String(answers[i]).trim() === String(a).trim()) correct++;
   });
+
+  // بعد الإغلاق: تدرّب فقط، بلا قسيمة ولا تسجيل محاولة
+  if (status === 'closed')
+    return reply(200, { practice: true, correct, total: key.length });
+
   const maxPoints = parseFloat(quiz.maxPoints || 0.5);
   const points = parseFloat((maxPoints * correct / key.length).toFixed(2));
 
@@ -54,5 +68,5 @@ exports.handler = async (event) => {
     return reply(500, { error: 'SERVER' });
   }
 
-  return reply(200, { code, points, correct, total: key.length });
+  return reply(200, { code, points, correct, total: key.length, closesAt: quiz.closesAt || null });
 };
