@@ -1,5 +1,12 @@
 const { db, studentId, reply } = require('../lib');
 
+const quizStatus = (q, now = Date.now()) => {
+  if (q.active === false) return 'closed';
+  if (q.opensAt && now < Date.parse(q.opensAt)) return 'notstarted';
+  if (q.closesAt && now > Date.parse(q.closesAt)) return 'closed';
+  return 'open';
+};
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return reply(200, {});
   if (event.httpMethod !== 'POST') return reply(405, { error: 'METHOD' });
@@ -26,6 +33,9 @@ exports.handler = async (event) => {
       const v = vSnap.data();
       if (v.studentId !== sid) throw new Error('NOT_YOURS');
       if (v.isUsed) throw new Error('USED');
+
+      const qSnap = await tx.get(db.collection('quizzes').doc(String(v.quizId)));
+      if (!qSnap.exists || quizStatus(qSnap.data()) !== 'open') throw new Error('CLOSED');
 
       const pts = parseFloat(v.points || 0);
       const activity = {
@@ -59,7 +69,7 @@ exports.handler = async (event) => {
     });
     return reply(200, result);
   } catch (e) {
-    if (['INVALID', 'NOT_YOURS', 'USED'].includes(e.message))
+    if (['INVALID', 'NOT_YOURS', 'USED', 'CLOSED'].includes(e.message))
       return reply(400, { error: e.message });
     console.error(e);
     return reply(500, { error: 'SERVER' });
