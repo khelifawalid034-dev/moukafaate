@@ -1,8 +1,15 @@
 const admin = require('firebase-admin');
 
+const clean = s => String(s || '')
+  .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/\u060C/g, ',')
+  .replace(/[\u00A0\u200E\u200F\u202A-\u202E\uFEFF]/g, ' ')
+  .trim();
+
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_KEY))
+    credential: admin.credential.cert(JSON.parse(clean(process.env.FIREBASE_KEY)))
   });
 }
 const db = admin.firestore();
