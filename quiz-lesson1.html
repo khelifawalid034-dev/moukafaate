@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقويم | الأستاذ خليفة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+body{background:#0a1f18;color:#fff;min-height:100vh;display:flex;justify-content:center;padding:14px}
+.app{width:100%;max-width:540px}
+.box{background:#123026;border:2px solid #f39c12;border-radius:20px;padding:18px;margin-top:10px}
+h1{text-align:center;color:#f1c40f;font-size:1.5rem;margin-top:8px}
+.sub{text-align:center;color:#ccc;font-size:.9rem}
+.big{font-size:3.4rem;text-align:center;margin:8px 0}
+p.t{text-align:center;line-height:1.9;color:#ddd;margin:8px 0}
+.btn{display:block;width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;margin-top:14px}
+#game{display:none}
+.top{display:flex;justify-content:space-between;font-weight:800;color:#f1c40f;margin-bottom:8px}
+.bar{height:10px;background:#0a1f18;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.bar>div{height:100%;width:0;background:#f1c40f;transition:width .3s}
+#tb{background:#e74c3c;width:100%}
+.q{font-size:1.25rem;font-weight:800;text-align:center;margin:18px 0;min-height:70px;display:flex;align-items:center;justify-content:center;line-height:1.7}
+.ops{display:grid;gap:11px}
+.op{border:0;border-radius:16px;padding:16px;font-size:1.1rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.op:active{transform:translateY(3px)}
+.c0{background:#e74c3c}.c1{background:#2980b9}.c2{background:#d68910}.c3{background:#27ae60}
+.op.sel{outline:4px solid #fff;transform:scale(.97)}
+.op:disabled{opacity:.6}
+.pop{animation:pop .35s}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+<h1 id="ttl"></h1>
+<div class="sub">مادة العلوم الإسلامية | الأستاذ خليفة</div>
+
+<div class="box" id="intro">
+<div class="big">🎮</div>
+<p class="t" id="info"></p>
+<p class="t">اختر الإجابة الصحيحة بالضغط عليها، ولا يمكنك التراجع بعد الاختيار.<br>في النهاية تحصل على <b>قسيمة</b> تدخلها في منصة المكافآت.</p>
+<button class="btn" onclick="start()">ابدأ اللعب 🚀</button>
+</div>
+
+<div class="box" id="game">
+<div class="top"><span id="cnt"></span><span>⏱️</span></div>
+<div class="bar"><div id="pb"></div></div>
+<div class="bar"><div id="tb"></div></div>
+<div class="q pop" id="qt"></div>
+<div class="ops" id="ops"></div>
+</div>
+</div>
+
+<script src="https://splendorous-biscuit-4ecc2d.netlify.app/mk.js"></script>
+<script>
+/* ===== هذا هو الجزء الوحيد الذي تغيّره في كل تقويم جديد ===== */
+const LESSON_ID = "lesson1";            // نفس الرمز المسجّل في لوحة الأستاذ
+const TITLE = "أركان الإسلام";
+const SECONDS = 20;                      // وقت كل سؤال
+const QUESTIONS = [                      // لا تضع هنا الإجابة الصحيحة، تُسجَّل في اللوحة فقط
+  { q: "كم عدد أركان الإسلام؟",                       o: ["ثلاثة", "خمسة", "سبعة"] },
+  { q: "ما هو أول ركن من أركان الإسلام؟",             o: ["الصلاة", "الصوم", "الشهادتان", "الحج"] },
+  { q: "في أي شهر يصوم المسلمون صيام الفريضة؟",       o: ["رمضان", "شوال", "محرم"] },
+  { q: "كم عدد الصلوات المفروضة في اليوم والليلة؟",   o: ["ثلاث", "خمس", "ست"] },
+  { q: "ما الكتاب الذي أنزله الله على نبينا محمد ﷺ؟", o: ["التوراة", "الإنجيل", "القرآن الكريم", "الزبور"] }
+];
+/* ================================================================ */
+
+const $ = id => document.getElementById(id);
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let items = [], ans = [], cur = 0, tm = null, locked = false;
+
+$('ttl').textContent = '🎮 ' + TITLE;
+$('info').textContent = QUESTIONS.length + ' أسئلة، ولكل سؤال ' + SECONDS + ' ثانية.';
+
+function start() {
+  items = shuf(QUESTIONS.map((x, i) => ({ i, q: x.q, o: shuf(x.o.map((t, j) => ({ t, n: j + 1 }))) })));
+  ans = new Array(items.length).fill("0");
+  cur = 0;
+  $('intro').style.display = 'none';
+  $('game').style.display = 'block';
+  ask();
+}
+
+function ask() {
+  clearTimeout(tm); locked = false;
+  if (cur >= items.length) return end();
+  const it = items[cur];
+  $('cnt').textContent = 'السؤال ' + (cur + 1) + ' من ' + items.length;
+  $('pb').style.width = (cur / items.length * 100) + '%';
+  const q = $('qt'); q.textContent = it.q; q.classList.remove('pop'); void q.offsetWidth; q.classList.add('pop');
+  const box = $('ops'); box.innerHTML = '';
+  it.o.forEach((x, k) => {
+    const b = document.createElement('button');
+    b.className = 'op c' + (k % 4); b.textContent = x.t;
+    b.onclick = () => pick(b, String(x.n));
+    box.appendChild(b);
+  });
+  const tb = $('tb'); tb.style.transition = 'none'; tb.style.width = '100%'; void tb.offsetWidth;
+  tb.style.transition = 'width ' + SECONDS + 's linear'; tb.style.width = '0%';
+  tm = setTimeout(() => pick(null, "0"), SECONDS * 1000);
+}
+
+function pick(btn, n) {
+  if (locked) return; locked = true; clearTimeout(tm);
+  ans[items[cur].i] = n;            // الإجابة تُحفظ بحسب ترتيب السؤال الأصلي
+  if (btn) btn.classList.add('sel');
+  document.querySelectorAll('.op').forEach(b => b.disabled = true);
+  setTimeout(() => { cur++; ask(); }, 550);
+}
+
+function end() {
+  $('pb').style.width = '100%';
+  $('game').innerHTML = '<div class="big">🏁</div><p class="t">انتهى التقويم! جاري إرسال إجاباتك...</p>';
+  setTimeout(() => {
+    if (window.MK) MK.finish(LESSON_ID, ans);
+    else $('game').innerHTML += '<p class="t">تعذّر الاتصال بالمنصة، أعد تحميل الصفحة.</p>';
+  }, 600);
+}
+</script>
+</body>
+</html>
