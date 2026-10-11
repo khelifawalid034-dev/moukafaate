@@ -15,8 +15,8 @@ exports.handler = async (event) => {
   let b;
   try { b = JSON.parse(event.body || '{}'); } catch { return reply(400, { error: 'BAD_JSON' }); }
 
-  const { quizId, classCode, firstName, lastName, answers } = b;
-  if (!quizId || !classCode || !firstName || !lastName || !Array.isArray(answers))
+  const { quizId, classCode, firstName, lastName, answers, check } = b;
+  if (!quizId || !classCode || !firstName || !lastName || (!check && !Array.isArray(answers)))
     return reply(400, { error: 'MISSING' });
   if (String(quizId).includes('/')) return reply(400, { error: 'BAD_QUIZ' });
 
@@ -24,8 +24,24 @@ exports.handler = async (event) => {
   if (!quizSnap.exists) return reply(404, { error: 'NO_QUIZ' });
 
   const quiz = quizSnap.data();
+
+  // الأقسام المسموحة (فارغة = كل الأقسام)
+  const allowed = Array.isArray(quiz.classes) ? quiz.classes : [];
+  if (allowed.length && !allowed.includes(String(classCode)))
+    return reply(403, { error: 'NOT_ALLOWED' });
+
   const status = quizStatus(quiz);
   if (status === 'notstarted') return reply(403, { error: 'NOT_STARTED', opensAt: quiz.opensAt });
+
+  const sid = studentId(classCode, firstName, lastName);
+  const attemptRef = db.collection('attempts').doc(sid + '__' + quizId);
+
+  // فحص مبكر في بداية التقويم: هل القسم مسموح، وهل أنجزه التلميذ من قبل؟
+  if (check) {
+    if (status === 'open' && (await attemptRef.get()).exists)
+      return reply(409, { error: 'ALREADY' });
+    return reply(200, { ok: true, status });
+  }
 
   const key = quiz.answers || [];
   let correct = 0;
@@ -40,8 +56,6 @@ exports.handler = async (event) => {
   const maxPoints = parseFloat(quiz.maxPoints || 0.5);
   const points = parseFloat((maxPoints * correct / key.length).toFixed(2));
 
-  const sid = studentId(classCode, firstName, lastName);
-  const attemptRef = db.collection('attempts').doc(sid + '__' + quizId);
   const code = crypto.randomBytes(6).toString('hex').toUpperCase();
   const voucherRef = db.collection('vouchers').doc(code);
 

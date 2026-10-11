@@ -36,9 +36,12 @@ exports.handler = async (event) => {
       if (isNaN(opens) || isNaN(closes) || closes <= opens)
         return reply(400, { error: 'BAD_DATES' });
       const maxPoints = Math.min(Math.max(parseFloat(b.maxPoints) || 0.5, 0.05), 5);
+      const classes = Array.isArray(b.classes)
+        ? b.classes.map(String).filter(c => /^[a-z0-9]{3,20}$/.test(c)) : [];
       await db.collection('quizzes').doc(id).set({
         title: String(b.title || id).slice(0, 80),
         answers,
+        classes,
         maxPoints,
         opensAt: new Date(opens).toISOString(),
         closesAt: new Date(closes).toISOString(),
