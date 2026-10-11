@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>منصة المكافآت | الأستاذ خليفة</title>
+<title>منصة مكافآت | الأستاذ خليفة</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
@@ -33,6 +33,7 @@ td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{ba
 .open{background:#1e8449}.closed{background:#922b21}.wait{background:#7d6608}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="pm" class="modal"><div class="mc">
@@ -43,8 +44,7 @@ td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{ba
 </div></div>
 
 <div class="app">
-<div class="top"><button class="tbtn" id="tOpen">🛡️ لوحة التحكم (الأستاذ)</button></div>
-<h1>مَنَصَّةُ المَكَافَآتِ</h1>
+<h1 id="ttl" style="user-select:none;-webkit-user-select:none">منصة مكافآت</h1>
 <div class="sub">مادة العلوم الإسلامية | الأستاذ خليفة</div>
 <div id="err"></div>
 
@@ -79,7 +79,7 @@ td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{ba
 <div class="tabs"><button class="btn sm" id="tabS">التلاميذ</button><button class="btn gray sm" id="tabQ">التقاويم</button></div>
 
 <div id="ps">
-<div class="row" style="margin-bottom:10px"><select id="flt" style="flex:1"></select><button class="btn sm" id="rf">تحديث</button></div>
+<div class="row" style="margin-bottom:10px"><select id="flt" style="flex:1"></select><button class="btn sm" id="rf">تحديث</button><button class="btn sm" id="xl" style="background:#1e8449">📥 Excel</button></div>
 <div id="stl"></div>
 </div>
 
@@ -89,6 +89,7 @@ td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{ba
 <label>رمز التقويم (إنجليزي بلا مسافات، مثل lesson1)</label><input id="qid" dir="ltr">
 <label>العنوان</label><input id="qti" placeholder="تقويم الدرس الأول">
 <label>الإجابات الصحيحة (واحدة في كل سطر بالترتيب)</label><textarea id="qan" rows="4" dir="ltr"></textarea>
+<label>الأقسام المسموحة (بلا تحديد = كل الأقسام)</label><div id="qcls" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
 <div class="g2">
 <div><label>النقاط القصوى</label><input id="qmx" type="number" step="0.05" value="0.5"></div>
 <div></div>
@@ -104,6 +105,7 @@ td,th{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.06)}th{ba
 
 <script>
 const CL=[["ad5z7eb3","2 آداب وفلسفة 3"],["f3id7xai","2 تسيير واقتصاد 3"],["ritwws5i","2 تسيير واقتصاد 2"],["vynajots","2 تقني رياضي 1"],["5qririln","2 علمي 3"],["afdw3t2k","1 ج م ع ت 7"],["gwsnatci","1 ج م ع ت 8"],["45pptqxn","1 ج م ع ت 9"],["2noo223m","1 ج م ع ت 10"],["enrt6unl","1 ج م آداب 7"]];
+const NM=Object.fromEntries(CL);
 const ERR={INVALID:'هذه القسيمة غير صحيحة!',NOT_YOURS:'هذه القسيمة ليست باسمك!',USED:'تم استخدام هذه القسيمة سابقاً!',CLOSED:'انتهى وقت التقويم، لا تُقبل قسيمته الآن.',MISSING:'بيانات ناقصة!',SERVER:'خطأ في الخادم، حاول مجدداً.',WRONG_PASSWORD:'كلمة المرور غير صحيحة!',BAD_DATES:'تواريخ الفتح/الإغلاق غير صحيحة.',BAD_ID:'رمز التقويم غير صالح.',NO_ANSWERS:'أدخل الإجابات الصحيحة.'};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -115,6 +117,7 @@ let me=null,PW='',STU=[],QZ=[];
 $('cls').innerHTML='<option value="" disabled selected>-- اختر القسم --</option>'+CL.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('');
 $('flt').innerHTML='<option value="ALL">جميع الأقسام</option>'+CL.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('');
 
+$('qcls').innerHTML=CL.map(c=>`<label style="display:flex;gap:6px;align-items:center;margin:0;font-size:.82rem"><input type="checkbox" value="${c[0]}" style="width:auto;margin:0">${c[1]}</label>`).join('');
 $('b1').onclick=()=>{const s=$('cls').value,i=$('ccode').value.trim().toLowerCase();
 if(!s)return err('اختر القسم أولاً!');if(i!==s)return err('رمز القسم غير صحيح!');show('v2')};
 $('b2').onclick=()=>{const f=$('fn').value.trim(),l=$('ln').value.trim();
@@ -128,8 +131,10 @@ $('tt').textContent='مجموعك: '+d.total.toFixed(2)+' نقطة';show('v4')}
 catch(e){err(ERR[e.message]||ERR.SERVER)}
 $('b3').disabled=false};
 $('b4').onclick=()=>{$('code').value='';show('v3')};
+(()=>{const h=new URLSearchParams(location.hash.slice(1)),c=h.get('c'),f=h.get('f'),l=h.get('l'),v=h.get('v');
+if(c&&f&&l&&CL.some(x=>x[0]===c)){me={firstName:f,lastName:l,classCode:c};if(v)$('code').value=v;history.replaceState(null,'',location.pathname);show('v3')}})();
 
-$('tOpen').onclick=()=>{$('pm').classList.add('on');$('pw').focus()};
+let tp=0,tt=null;$('ttl').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,2500);if(tp>=5){tp=0;$('pm').classList.add('on');$('pw').focus()}};
 $('pwX').onclick=()=>{$('pm').classList.remove('on');$('pw').value=''};
 $('pwGo').onclick=async()=>{const p=$('pw').value;if(!p)return;
 try{const d=await api('teacher',{password:p});PW=p;STU=d.students;$('pw').value='';
@@ -140,12 +145,31 @@ $('tabS').onclick=()=>{$('ps').style.display='block';$('pq').style.display='none
 $('tabQ').onclick=()=>{$('pq').style.display='block';$('ps').style.display='none';$('tabQ').classList.remove('gray');$('tabS').classList.add('gray')};
 $('rf').onclick=async()=>{try{STU=(await api('teacher',{password:PW})).students;rS()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
 $('flt').onchange=rS;
+$('xl').onclick=()=>{
+if(!window.XLSX)return alert('تعذّر تحميل مكتبة Excel، تأكد من الاتصال بالإنترنت.');
+const f=$('flt').value,L=STU.filter(s=>f==='ALL'||s.classCode===f).sort(cmp);
+if(!L.length)return alert('لا توجد بيانات للتصدير.');
+const wb=XLSX.utils.book_new(),by={};
+L.forEach(s=>(by[s.classCode]=by[s.classCode]||[]).push(s));
+Object.keys(by).forEach(c=>{
+const T=[];by[c].forEach(s=>(s.activities||[]).forEach(a=>{if(T.indexOf(a.title)<0)T.push(a.title)}));
+const rows=[['اللقب','الاسم','المجموع',...T]];
+by[c].forEach(s=>{const m={};(s.activities||[]).forEach(a=>{m[a.title]=+((m[a.title]||0)+(+a.points||0)).toFixed(2)});
+rows.push([s.lastName,s.firstName,+(+s.totalPoints||0).toFixed(2),...T.map(t=>m[t]==null?'':m[t])])});
+const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:16},{wch:16},{wch:9},...T.map(()=>({wch:16}))];
+XLSX.utils.book_append_sheet(wb,ws,((NM[c]||c).replace(/[\\\/?*\[\]:]/g,'').slice(0,31))||c);
+});
+wb.Workbook={Views:[{RTL:true}]};
+XLSX.writeFile(wb,'moukafaate-'+new Date().toISOString().slice(0,10)+'.xlsx');
+};
 
-function rS(){const f=$('flt').value,L=STU.filter(s=>f==='ALL'||s.classCode===f);
+const AR=new Intl.Collator('ar',{sensitivity:'base'});
+const cmp=(a,b)=>AR.compare(a.lastName||'',b.lastName||'')||AR.compare(a.firstName||'',b.firstName||'');
+function rS(){const f=$('flt').value,L=STU.filter(s=>f==='ALL'||s.classCode===f).sort(cmp);
 const nm=Object.fromEntries(CL);
 $('stl').innerHTML=L.length?L.map(s=>{const A=s.activities||[];
 const rows=A.length?A.map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.title)}</td><td><code>${esc(a.code)}</code></td><td>${esc(a.date)}</td><td style="color:#2ecc71">+${(+a.points||0).toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="5">لا أنشطة</td></tr>';
-return `<div class="card"><div class="row"><div><b>${esc(s.firstName)} ${esc(s.lastName)}</b> <span class="st wait">${esc(nm[s.classCode]||s.classCode)}</span></div><b style="color:#f1c40f;font-size:1.2rem">${(+s.totalPoints||0).toFixed(2)} ن</b></div><div class="tw"><table><tr><th>#</th><th>النشاط</th><th>القسيمة</th><th>التاريخ</th><th>النقاط</th></tr>${rows}</table></div></div>`}).join(''):'<p style="text-align:center;color:#aaa;padding:16px">لا يوجد تلاميذ بعد.</p>'}
+return `<div class="card"><div class="row"><div><b>${esc(s.lastName)} ${esc(s.firstName)}</b> <span class="st wait">${esc(nm[s.classCode]||s.classCode)}</span></div><b style="color:#f1c40f;font-size:1.2rem">${(+s.totalPoints||0).toFixed(2)} ن</b><button class="btn sm" style="background:#922b21" onclick="dlS(${STU.indexOf(s)})">🗑️ حذف</button></div><div class="tw"><table><tr><th>#</th><th>النشاط</th><th>القسيمة</th><th>التاريخ</th><th>النقاط</th></tr>${rows}</table></div></div>`}).join(''):'<p style="text-align:center;color:#aaa;padding:16px">لا يوجد تلاميذ بعد.</p>'}
 
 const status=q=>{const n=Date.now();if(q.active===false)return['closed','مقفل'];
 if(q.opensAt&&n<Date.parse(q.opensAt))return['wait','لم يبدأ'];
@@ -159,13 +183,17 @@ defDates();
 async function loadQ(){try{QZ=(await api('quizzes',{password:PW,action:'list'})).quizzes;rQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}}
 function rQ(){$('ql').innerHTML=QZ.length?QZ.map((q,i)=>{const s=status(q);
 return `<div class="card"><div class="row"><div><b>${esc(q.title)}</b> <code>${esc(q.id)}</code></div><span class="st ${s[0]}">${s[1]}</span></div>
-<div style="font-size:.82rem;color:#bbb;margin:6px 0">من ${fmt(q.opensAt)} إلى ${fmt(q.closesAt)} | ${q.answers.length} أسئلة | ${q.maxPoints} ن</div>
+<div style="font-size:.82rem;color:#bbb;margin:6px 0">من ${fmt(q.opensAt)} إلى ${fmt(q.closesAt)} | ${q.answers.length} أسئلة | ${q.maxPoints} ن | ${q.classes&&q.classes.length?q.classes.map(c=>NM[c]||c).join('، '):'كل الأقسام'}</div>
 <div class="row"><button class="btn sm" onclick="edQ(${i})">تعديل</button><button class="btn sm ${q.active===false?'':'gray'}" onclick="tgQ(${i})">${q.active===false?'فتح':'قفل الآن'}</button></div></div>`}).join(''):'<p style="text-align:center;color:#aaa">لا توجد تقاويم.</p>'}
-window.edQ=i=>{const q=QZ[i];$('qid').value=q.id;$('qti').value=q.title;$('qan').value=q.answers.join('\n');$('qmx').value=q.maxPoints;$('qop').value=loc(q.opensAt);$('qcl').value=loc(q.closesAt);window.scrollTo(0,0)};
+window.edQ=i=>{const q=QZ[i];$('qid').value=q.id;$('qti').value=q.title;$('qan').value=q.answers.join('\n');$('qmx').value=q.maxPoints;$('qop').value=loc(q.opensAt);$('qcl').value=loc(q.closesAt);document.querySelectorAll('#qcls input').forEach(x=>x.checked=(q.classes||[]).includes(x.value));window.scrollTo(0,0)};
+window.dlS=async i=>{const s=STU[i];if(!s||!s.id)return;
+if(!confirm('حذف التلميذ «'+s.lastName+' '+s.firstName+'» نهائياً؟\n\nسيُحذف مجموع نقاطه وسجل أنشطته ومحاولاته وقسائمه، ويستطيع إعادة التقويمات من جديد.\n\nلا يمكن التراجع.'))return;
+try{await api('teacher',{password:PW,action:'delete',id:s.id});STU.splice(i,1);rS();alert('تم حذف التلميذ ✅')}
+catch(e){alert(ERR[e.message]||ERR.SERVER)}};
 window.tgQ=async i=>{const q=QZ[i];try{await api('quizzes',{password:PW,action:'toggle',quizId:q.id,active:q.active===false});loadQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
 $('qsv').onclick=async()=>{
 try{await api('quizzes',{password:PW,action:'save',quizId:$('qid').value.trim(),title:$('qti').value.trim(),
-answers:$('qan').value.split('\n'),maxPoints:$('qmx').value,
+answers:$('qan').value.split('\n'),classes:[...document.querySelectorAll('#qcls input:checked')].map(x=>x.value),maxPoints:$('qmx').value,
 opensAt:new Date($('qop').value).toISOString(),closesAt:new Date($('qcl').value).toISOString(),active:true});
 alert('تم الحفظ ✅');loadQ()}catch(e){err(ERR[e.message]||ERR.SERVER)}};
 </script>
