@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقويم | الأستاذ خليفة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+body{background:#0a1f18;color:#fff;min-height:100vh;display:flex;justify-content:center;padding:14px}
+.app{width:100%;max-width:560px}
+.box{background:#123026;border:2px solid #f39c12;border-radius:20px;padding:18px;margin-top:10px}
+h1{text-align:center;color:#f1c40f;font-size:1.35rem;margin-top:8px;line-height:1.6}
+.sub{text-align:center;color:#ccc;font-size:.9rem}
+.big{font-size:3.4rem;text-align:center;margin:8px 0}
+p.t{text-align:center;line-height:1.9;color:#ddd;margin:8px 0}
+.btn{display:block;width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;margin-top:14px}
+#game{display:none}
+#snd{position:fixed;top:10px;left:10px;width:40px;height:40px;border-radius:50%;background:#123026;border:1px solid #f39c12;font-size:1.1rem;cursor:pointer;color:#fff;z-index:5}
+.top{display:flex;justify-content:space-between;font-weight:800;color:#f1c40f;margin-bottom:8px}
+.bar{height:10px;background:#0a1f18;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.bar>div{height:100%;width:0;background:#f1c40f;transition:width .3s}
+#tb{background:#e74c3c;width:100%}
+.sec{text-align:center;color:#7fd1ae;font-size:.85rem;font-weight:700;margin-top:4px}
+.q{font-size:1.25rem;font-weight:800;text-align:center;margin:14px 0;min-height:70px;display:flex;align-items:center;justify-content:center;line-height:1.9}
+.q.long{font-size:1.02rem;font-weight:700;text-align:right;justify-content:flex-start;line-height:2}
+.ops{display:grid;gap:11px}
+.op{border:0;border-radius:16px;padding:15px;font-size:1.08rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.op:active{transform:translateY(3px)}
+.c0{background:#e74c3c}.c1{background:#2980b9}.c2{background:#d68910}.c3{background:#27ae60}
+.op.sel{outline:4px solid #fff;transform:scale(.97)}
+.op:disabled{opacity:.6}
+.pop{animation:pop .35s}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.urgent{color:#e74c3c}
+.sd{background:rgba(255,255,255,.06);border-right:4px solid #f1c40f;border-radius:10px;padding:12px 14px;margin:10px 0 0;font-size:1rem;line-height:2;text-align:right;color:#e8efe9}
+.sd:empty,.sec:empty{display:none}
+</style>
+</head>
+<body>
+<button id="snd" onclick="this.textContent=Snd.toggle()?'🔊':'🔇'">🔊</button>
+<div class="app">
+<h1 id="ttl"></h1>
+<div class="sub">مادة العلوم الإسلامية | الأستاذ خليفة</div>
+
+<div class="box" id="intro">
+<div class="big">🎮</div>
+<p class="t" id="info"></p>
+<p class="t">اقرأ السند والسؤال جيداً ثم اختر الإجابة الصحيحة بالضغط عليها، ولا يمكنك التراجع بعد الاختيار.<br>في النهاية تحصل على <b>قسيمة</b> تُضاف بها نقاطك في منصة مكافآت.</p>
+<button class="btn" onclick="start()">ابدأ 🚀</button>
+</div>
+
+<div class="box" id="game">
+<div class="top"><span id="cnt"></span><span id="tm"></span></div>
+<div class="bar"><div id="pb"></div></div>
+<div class="bar"><div id="tb"></div></div>
+<div class="sec" id="sec"></div>
+<div class="sd" id="sd"></div>
+<div class="q pop" id="qt"></div>
+<div class="ops" id="ops"></div>
+</div>
+</div>
+
+<script src="https://splendorous-biscuit-4ecc2d.netlify.app/mk.js"></script>
+<script>
+/* ===== هذا هو الجزء الوحيد الذي تغيّره في كل تقويم جديد ===== */
+const LESSON_ID = `lesson3`;   // نفس الرمز المسجّل في لوحة الأستاذ
+const TITLE = `تقويم: العلم وآداب طالب العلم ومنزلة العلماء`;
+const SECTIONS = [``];          // قسم واحد (بلا عنوان)
+const TF = [`صحيح`, `خطأ`];     // أسئلة صح/خطأ: fix:true تثبّت ترتيب الخيارين
+// d = السند، q = السؤال. الإجابة الصحيحة لا توضع هنا، بل في لوحة الأستاذ
+const QUESTIONS = [
+{d:`قال تعالى: ﴿يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنْكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ وَاللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ﴾ [المجادلة: 11].`,q:`يشير السند إلى:`,o:[`فضل العلم الشرعي والنافع ورفعة صاحبه في الدارين.`,`جزاء المتصدقين والمنفقين في سبيل الله.`,`فضل الجهاد والمجاهدين في ساحات الوغى.`,`عاقبة الصابرين على الابتلاءات والمحن.`]},
+{d:`«إن يسير المعرفة إذا اقترن بصالح القصد أثمر، وإن كثيرها إذا خالطه ابتغاء الثناء والجاه صار هباءً لا وزن له ولا أجر».`,q:`يشير السند إلى أدب أساسي من آداب طالب العلم، وهو:`,o:[`التواضع ونبذ الكبر.`,`الإخلاص لله تعالى.`,`حسن الإصغاء والاستماع.`,`الصبر على مشقة التعلم.`]},
+{d:`عن أبي هريرة رضي الله عنه أن رسول الله صلى الله عليه وسلم قال: «مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللهُ لَهُ بِهِ طَرِيقاً إِلَى الجَنَّةِ...».`,q:`يُبيّن الحديث الشريف أن فضل طلب العلم النافع والشرعي يعد سبباً مباشراً لتسهيل طريق الجنة.`,o:TF,fix:true},
+{d:`«سَمِعَ طالبُ علمٍ مسألةً يعلمها ويحفظها من قبل، فجلس بين يدي المدرس يُصغي بقلبه وجوارحه وكأنه يسمعها لأول مرة في حياته».`,q:`يشير السند إلى التزام التلميذ بأدب:`,o:[`الإخلاص في النية.`,`الصبر على مرارة التحصيل.`,`حسن الإصغاء والاستماع.`,`التواضع للمعلِّم.`]},
+{d:`قال تعالى: ﴿وَإِذَا قُرِئَ الْقُرْآنُ فَاسْتَمِعُوا لَهُ وَأَنصِتُوا لَعَلَّكُمْ تُرْحَمُونَ﴾ [الأعراف: 204].`,q:`يشير السند إلى أدب أساسي عند التلقي والتعلم، وهو:`,o:[`التواضع لطلب المعرفة.`,`حسن الإصغاء والاستماع.`,`الإخلاص وتجريد القصد.`,`الصبر على طول الطريق.`]},
+{d:`«كأن العلم مطر هطول، والقلب أرض؛ فما كان منها خافضاً منخفضاً استقر فيه الماء ونبت، وما كان منها شامخاً مرتفعاً انزلق عنه الماء وظل جافاً هامداً».`,q:`يشير التشبيه الوارد في السند إلى أدب:`,o:[`الصبر واحتمال الأذى.`,`حسن الإصغاء والاستماع.`,`التواضع وخفض الجناح.`,`الإخلاص وابتغاء وجه الله.`]},
+{d:`«جلس التلميذ في القسم منصتاً لأستاذه دون مقاطعة ولا التفات حتى أنهى شرح الدرس بالكامل».`,q:`يعكس السند التزام التلميذ بأدب حسن الإصغاء والاستماع مع معلمه.`,o:TF,fix:true},
+{d:`«حفظ أحد التلاميذ أبواباً واسعة من الفقه، وكان كلما التقى بزملاء له سارع إلى إظهار خطئهم والتعالي عليهم بقوة حفظه ودقة حجته».`,q:`يُبيّن السند أن هذا التلميذ طبق أدبي الإخلاص والتواضع بالشكل المطلوب.`,o:TF,fix:true},
+{d:`قال تعالى: ﴿فَاسْأَلُوا أَهْلَ الذِّكْرِ إِن كُنتُمْ لَا تَعْلَمُونَ﴾ [النحل: 43].`,q:`يوضح السند واجباً أساسياً نحو العلماء، وهو:`,o:[`الرجوع إليهم وسؤالهم في المعضلات.`,`توقيرهم واحترامهم وتقديرهم.`,`الدعاء لهم بظهر الغيب بالثبات.`,`الاقتداء بأخلاقهم وسمتهم الحسن.`]},
+{d:`عن أبي هريرة رضي الله عنه أن رسول الله صلى الله عليه وسلم قال: «...وَإِنَّ العَالِمَ لَيَسْتَغْفِرُ لَهُ مَنْ فِي السَّمَاوَاتِ وَمَنْ فِي الأَرْضِ حَتَّى الحِيتَانُ فِي المَاءِ...».`,q:`يشير السند إلى:`,o:[`منزلة العلماء الرفيعة واستغفار الكائنات لهم.`,`واجب احترام وتوقير العلماء في المجتمع.`,`ضرورة الاقتداء بأفعال العلماء وهديهم.`,`وجوب الرجوع إلى العلماء عند النوازل.`]},
+{d:`«إن التحصيل العلمي لا يحصل في يوم وليلة، بل يتطلب نفساً طويلة وتحملاً لمشاق المراجعة والتكرار».`,q:`يشير السند إلى أدب من آداب طالب العلم، وهو:`,o:[`الصبر والمجاهدة.`,`الإخلاص والصدق.`,`التواضع واللين.`,`حسن الإصغاء والاستماع.`]},
+{d:`قال تعالى مادحاً خيرة خلقه: ﴿أُوْلَئِكَ الَّذِينَ هَدَى اللَّهُ فَبِهُدَاهُمُ اقْتَدِهْ...﴾ [الأنعام: 90].`,q:`تشير الآية الكريمة إلى واجب الاقتداء بالعلماء والأنبياء واتخاذهم قدوة حسنة.`,o:TF,fix:true},
+{d:`عن أبي هريرة رضي الله عنه أن رسول الله صلى الله عليه وسلم قال: «...وَإِنَّ المَلَائِكَةَ لَتَضَعُ أَجْنِحَتَهَا رِضاً لِطَالِبِ العِلْمِ...».`,q:`يشير السند إلى:`,o:[`فضل طلب العلم الشرعي والتكريم الإلهي لأهله.`,`فضل العلم النافع الدنيوي وخدمته للبشرية.`,`عظمة منزلة العلماء وورثتهم للأنبياء.`,`تفضيل العالم على العابد كفضل البدر.`]},
+{d:`«عندما تقع في المجتمع شائعات فكرية أو مسائل معقدة تشوه الحقائق، فإن الأفراد الواعين يسارعون إلى الاستنارة برأي أهل الاختصاص والرسوخ العلمي».`,q:`يُؤكد السند واجب الرجوع إلى العلماء وسؤالهم باعتبارهم ملاذاً عند النوازل.`,o:TF,fix:true},
+{d:`«برز العالم المسلم الخوارزمي في تأسيس القواعد الرياضية لعلم الجبر، بينما تألق ابن الهيثم في علم البصريات».`,q:`يُبيّن السند إسهامات العلماء المسلمين في العلوم التطبيقية والتجريبية إلى جانب العلوم الشرعية.`,o:TF,fix:true},
+{d:`عن أبي هريرة رضي الله عنه أن رسول الله صلى الله عليه وسلم قال: «...إِنَّ الأَنْبِيَاءَ لَمْ يُوَرِّثوا دِينَاراً وَلا دِرْهَماً، إِنَّمَا وَرَّثُوا العِلْمَ...».`,q:`يشير السند إلى:`,o:[`منزلة العلماء العالية بكونهم ورثة للأنبياء.`,`فضل السعي في طلب العلم وسهولة الجنة.`,`استغفار المخلوقات لمن طلب العلم الشرعي.`,`تفضيل العالم على العابد في الدرجات.`]},
+{d:`«يُعد العالم المسلم الخوارزمي مؤسساً لواحد من أهم فروع الرياضيات الحديثة».`,q:`المجال العلمي البارز المذكور للخوارزمي في السند هو:`,o:[`علم الجبر والرياضيات.`,`علم البصريات والفيزياء.`,`علم الطب والجراحة.`,`علم الفلك والرحلات.`]},
+{d:`«قد يقطع السالك شوطاً في طريق المعرفة، فتواجهه مسألة مستغلقة أو قسوة معلم؛ فمن نكص وتوقف حرم، ومن ألقى عن كاهله العجز ومضى واصل السير بلغ المراد».`,q:`يشير السند إلى أدب أساسي يحتاجه طالب العلم لتجاوز العقبات، وهو:`,o:[`الصبر على المكاره.`,`التواضع للمعلمين.`,`الإخلاص في النية.`,`حسن الإصغاء والاستماع.`]},
+{d:`«قدم العلماء المسلمون اكتشافات فارقة في الطب والفلك والفيزياء أسهمت في بناء الحضارة الإنسانية».`,q:`تقتصر الحضارة الإسلامية حسب السند على العلوم الدينية دون العلوم الكونية النافعة.`,o:TF,fix:true},
+{d:`«وقع عالم في زلة لسانية وسهو أثناء البيان، فبادر أحد الحاضرين بنشر خطئه بين المجالس والتقليل من قيمته أمام الناس».`,q:`يشير السند إلى سلوك مرفوض يتنافى مع:`,o:[`واجب احترام وتوقير العلماء.`,`واجب الرجوع إلى العلماء وسؤالهم.`,`واجب الدعاء المستمر للعلماء.`,`واجب الاقتداء بأخلاق العلماء.`]}
+];
+/* ================================================================ */
+
+/* الأصوات: تُولَّد من المتصفح، بلا ملفات */
+const Snd = (() => {
+  let ctx = null, on = true;
+  const ac = () => {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  const tone = (f, d, type = 'sine', v = .15, t0 = 0, f2) => {
+    if (!on) return; const c = ac(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d);
+  };
+  return {
+    unlock: ac,
+    tap() { tone(660, .08, 'square', .1); },
+    next() { tone(440, .1, 'triangle', .12); tone(660, .12, 'triangle', .12, .08); },
+    tick() { tone(1000, .05, 'square', .08); },
+    time() { tone(220, .4, 'sawtooth', .14, 0, 90); },
+    go() { [392, 523, 659, 784].forEach((f, i) => tone(f, .15, 'triangle', .14, i * .1)); },
+    win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .22, 'triangle', .16, i * .14)); tone(1318, .5, 'triangle', .14, .6); },
+    toggle() { on = !on; return on; }
+  };
+})();
+
+const $ = id => document.getElementById(id);
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// الوقت يتناسب مع طول السؤال: من 30 إلى 75 ثانية
+const timeFor = it => { const n = (it.d || '').length + it.q.length + it.o.reduce((a, x) => a + x.t.length, 0); return Math.min(75, Math.max(30, 20 + Math.ceil(n / 12))); };
+let items = [], ans = [], cur = 0, tm = null, locked = false, left = 0;
+
+$('ttl').textContent = '🎮 ' + TITLE;
+$('info').textContent = QUESTIONS.length + ' سؤالاً، والوقت لكل سؤال يتناسب مع طوله.';
+
+function start() {
+  Snd.unlock();
+  if (window.MK) MK.ask(begin, LESSON_ID); else begin();
+}
+
+function begin() {
+  Snd.go();
+  items = [];
+  SECTIONS.forEach((_, si) => {   // الأقسام بالترتيب، والخلط داخل كل قسم فقط
+    items = items.concat(shuf(QUESTIONS
+      .map((x, i) => ({ i, s: x.s || 0, d: x.d || '', q: x.q, fix: !!x.fix, o: (x.fix ? (a => a) : shuf)(x.o.map((t, j) => ({ t, n: j + 1 }))) }))
+      .filter(x => x.s === si)));
+  });
+  ans = new Array(QUESTIONS.length).fill("0");
+  cur = 0;
+  $('intro').style.display = 'none';
+  $('game').style.display = 'block';
+  nextQ();
+}
+
+function nextQ() {
+  clearInterval(tm); locked = false;
+  if (cur >= items.length) return end();
+  const it = items[cur], T = timeFor(it);
+  $('cnt').textContent = 'السؤال ' + (cur + 1) + ' من ' + items.length;
+  $('pb').style.width = (cur / items.length * 100) + '%';
+  $('sec').textContent = SECTIONS[it.s] || '';
+  $('sd').textContent = it.d;
+  const q = $('qt'); q.textContent = it.q;
+  q.className = 'q' + (it.q.length > 140 ? ' long' : ''); void q.offsetWidth; q.classList.add('pop');
+  const box = $('ops'); box.innerHTML = '';
+  it.o.forEach((x, k) => {
+    const b = document.createElement('button');
+    b.className = 'op c' + (it.fix ? (x.n === 1 ? 3 : 0) : k % 4); b.textContent = x.t;
+    b.onclick = () => { Snd.tap(); pick(b, String(x.n)); };
+    box.appendChild(b);
+  });
+  left = T; $('tm').textContent = '⏱️ ' + left; $('tm').classList.remove('urgent');
+  const tb = $('tb'); tb.style.transition = 'none'; tb.style.width = '100%'; void tb.offsetWidth;
+  tb.style.transition = 'width ' + T + 's linear'; tb.style.width = '0%';
+  tm = setInterval(() => {
+    left--; $('tm').textContent = '⏱️ ' + Math.max(left, 0);
+    if (left > 0 && left <= 5) { Snd.tick(); $('tm').classList.add('urgent'); }
+    if (left <= 0) { Snd.time(); pick(null, "0"); }
+  }, 1000);
+}
+
+function pick(btn, n) {
+  if (locked) return; locked = true; clearInterval(tm);
+  ans[items[cur].i] = n;            // الإجابة تُحفظ بحسب ترتيب السؤال الأصلي
+  if (btn) btn.classList.add('sel');
+  document.querySelectorAll('.op').forEach(b => b.disabled = true);
+  setTimeout(() => { cur++; if (cur < items.length) Snd.next(); nextQ(); }, 550);
+}
+
+function end() {
+  Snd.win();
+  $('pb').style.width = '100%';
+  $('game').innerHTML = '<div class="big">🏁</div><p class="t">انتهى التقويم! جاري تصحيح إجاباتك...</p>';
+  setTimeout(() => {
+    if (window.MK) MK.finish(LESSON_ID, ans);
+    else $('game').innerHTML += '<p class="t">تعذّر الاتصال بالمنصة، أعد تحميل الصفحة.</p>';
+  }, 900);
+}
+</script>
+</body>
+</html>
