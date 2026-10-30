@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقويم | الأستاذ خليفة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal',sans-serif}
+body{background:#0a1f18;color:#fff;min-height:100vh;display:flex;justify-content:center;padding:14px}
+.app{width:100%;max-width:560px}
+.box{background:#123026;border:2px solid #f39c12;border-radius:20px;padding:18px;margin-top:10px}
+h1{text-align:center;color:#f1c40f;font-size:1.35rem;margin-top:8px;line-height:1.6}
+.sub{text-align:center;color:#ccc;font-size:.9rem}
+.big{font-size:3.4rem;text-align:center;margin:8px 0}
+p.t{text-align:center;line-height:1.9;color:#ddd;margin:8px 0}
+.btn{display:block;width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;margin-top:14px}
+#game{display:none}
+#snd{position:fixed;top:10px;left:10px;width:40px;height:40px;border-radius:50%;background:#123026;border:1px solid #f39c12;font-size:1.1rem;cursor:pointer;color:#fff;z-index:5}
+.top{display:flex;justify-content:space-between;font-weight:800;color:#f1c40f;margin-bottom:8px}
+.bar{height:10px;background:#0a1f18;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.bar>div{height:100%;width:0;background:#f1c40f;transition:width .3s}
+#tb{background:#e74c3c;width:100%}
+.sec{text-align:center;color:#7fd1ae;font-size:.85rem;font-weight:700;margin-top:4px}
+.q{font-size:1.25rem;font-weight:800;text-align:center;margin:14px 0;min-height:70px;display:flex;align-items:center;justify-content:center;line-height:1.9}
+.q.long{font-size:1.02rem;font-weight:700;text-align:right;justify-content:flex-start;line-height:2}
+.ops{display:grid;gap:11px}
+.op{border:0;border-radius:16px;padding:15px;font-size:1.08rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.op:active{transform:translateY(3px)}
+.c0{background:#e74c3c}.c1{background:#2980b9}.c2{background:#d68910}.c3{background:#27ae60}
+.op.sel{outline:4px solid #fff;transform:scale(.97)}
+.op:disabled{opacity:.6}
+.pop{animation:pop .35s}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.urgent{color:#e74c3c}
+.sd{background:rgba(255,255,255,.06);border-right:4px solid #f1c40f;border-radius:10px;padding:12px 14px;margin:10px 0 0;font-size:1rem;line-height:2;text-align:right;color:#e8efe9}
+.sd:empty,.sec:empty{display:none}
+</style>
+</head>
+<body>
+<button id="snd" onclick="this.textContent=Snd.toggle()?'🔊':'🔇'">🔊</button>
+<div class="app">
+<h1 id="ttl"></h1>
+<div class="sub">مادة العلوم الإسلامية | الأستاذ خليفة</div>
+
+<div class="box" id="intro">
+<div class="big">🎮</div>
+<p class="t" id="info"></p>
+<p class="t">اقرأ السند والسؤال جيداً ثم اختر الإجابة الصحيحة بالضغط عليها، ولا يمكنك التراجع بعد الاختيار.<br>في النهاية تحصل على <b>قسيمة</b> تُضاف بها نقاطك في منصة مكافآت.</p>
+<button class="btn" onclick="start()">ابدأ 🚀</button>
+</div>
+
+<div class="box" id="game">
+<div class="top"><span id="cnt"></span><span id="tm"></span></div>
+<div class="bar"><div id="pb"></div></div>
+<div class="bar"><div id="tb"></div></div>
+<div class="sec" id="sec"></div>
+<div class="sd" id="sd"></div>
+<div class="q pop" id="qt"></div>
+<div class="ops" id="ops"></div>
+</div>
+</div>
+
+<script src="https://splendorous-biscuit-4ecc2d.netlify.app/mk.js"></script>
+<script>
+/* ===== هذا هو الجزء الوحيد الذي تغيّره في كل تقويم جديد ===== */
+const LESSON_ID = `lesson4`;   // نفس الرمز المسجّل في لوحة الأستاذ
+const TITLE = `تقويم أحكام المدود في رواية ورش`;
+const SECTIONS = [``];          // قسم واحد (بلا عنوان)
+const TF = [`صحيح`, `خطأ`];     // أسئلة صح/خطأ: fix:true تثبّت ترتيب الخيارين
+// d = السند (اختياري)، q = السؤال. الإجابة الصحيحة لا توضع هنا، بل في لوحة الأستاذ
+const QUESTIONS = [
+{q:`في قوله تعالى: ﴿مَا لَهُ فِي الْآخِرَةِ﴾، هاء الضمير في (له):`,o:[`مد صلة صغرى`,`صلة كبرى`,`ليست مد صلة`]},
+{q:`التعليل: "حرف (السين) في فاتحة ﴿طسّم﴾ يمد ست حركات لكونه حرفاً ثلاثياً وسطه حرف مد لازم."`,o:TF,fix:true},
+{q:`المد في قوله تعالى: ﴿جَاءَ أَحَدُهُم﴾ هو:`,o:[`مد متصل`,`مد منفصل`,`صلة كبرى`,`مد بدل`]},
+{q:`التعليل: "كلمة ﴿مَحْيَايْ﴾ عند الوقف عليها تعد من قبيل المد اللازم الكلمي المخفف."`,o:TF,fix:true},
+{q:`المد في كلمة ﴿قَالُوا﴾:`,o:[`مد طبيعي`,`مد لازم`,`مد لين`,`مد بدل`]},
+{q:`نوع المد في قوله تعالى: ﴿شَيْءٍ﴾ عند الوقف عليها:`,o:[`مد لين مهموز`,`مد لين غير مهموز`,`مد بدل`,`مد متصل`]},
+{q:`قوله تعالى: ﴿إِنَّهُ عَلِيمٌ﴾ - هاء الضمير في (إنه) تعد مد صلة كبرى.`,o:TF,fix:true},
+{q:`المقارنة بين ﴿يَتَسَاءَلُونَ﴾ و ﴿يَا أَيُّهَا﴾ عند ورش:`,o:[`المتصل حركتان والمنفصل ست`,`كلاهما يمدان حركتين`,`المتصل ست وجوباً والمنفصل كالمتصل غالباً`,`المتصل 4 حركات والمنفصل حركتان`]},
+{q:`التعليل: "تقدم الهمز على حرف المد في ﴿ءَامَنُوا﴾ يوجب لورش مده بمقدار ست حركات وجوباً فقط."`,o:TF,fix:true},
+{q:`الوقف على قوله تعالى: ﴿الْعَالَمِينَ﴾:`,o:[`مد عارض للسكون`,`مد لازم كلمي مخفف`,`مد لين غير مهموز`,`مد عوض`]},
+{q:`الوقف على قوله تعالى: ﴿حَكِيمٌ﴾ ينشأ عنه مد عوض.`,o:TF,fix:true},
+{q:`نوع المد في قوله تعالى: ﴿ءَادَمَ﴾ عند ورش:`,o:[`مد بدل`,`مد لازم`,`مد لين`,`مد منفصل`]},
+{q:`التعليل: "سُمي المد المتصل لعدم فصل حرف المد عن الهمزة بكلمة، ويمد وجوباً."`,o:TF,fix:true},
+{q:`المد في حرفي فاتحة ﴿طَه﴾ يمد بمقدار:`,o:[`4 حركات`,`6 حركات`,`حركتان`,`الأوجه الثلاثة`]},
+{q:`التعليل: "كلمة ﴿الْحَاقَّةُ﴾ مد لازم كلمي مثقل لأن حرف المد جاء بعده حرف مشدد مدغم."`,o:TF,fix:true},
+{q:`الوقف على قوله تعالى: ﴿خَوْفٍ﴾:`,o:[`حركتان`,`تجوز فيه الأوجه الثلاثة`,`ست حركات`,`يسقط حرف اللين`]},
+{q:`التعليل: "مد الصلة الكبرى يتحقق بوقوع هاء الضمير بين ساكنين مع همزة قطع بعدها."`,o:TF,fix:true},
+{q:`حكم "ميم الجمع" عند ورش في قوله تعالى: ﴿عَلَيْهِمْ ءأنذرتهم﴾:`,o:[`تحذف التقاء الساكنين ولا يوجد مد`,`تمد بمقدار ست حركات`,`تمد حركتين فقط`,`تقلب نوناً`]},
+{q:`التعليل: "المد اللازم الحرفي المخفف في فواتح السور يمد لعدم الإدغام، والمثقل لحصول الإدغام."`,o:TF,fix:true},
+{q:`مقارنة مقادير المد لورش: (طبيعي/عوض/صلة صغرى) مقابل (متصل/منفصل/لازم) مقابل (بدل/لين/عارض):`,o:[`الأول حركتان - الثاني ست - الثالث الأوجه الثلاثة`,`الأول ست - الثاني حركتان - الثالث أربع`,`كلها ست حركات بلا استثناء`,`الأول حركتان - الثاني الأوجه - الثالث ست`]}
+];
+/* ================================================================ */
+
+/* الأصوات: تُولَّد من المتصفح، بلا ملفات */
+const Snd = (() => {
+  let ctx = null, on = true;
+  const ac = () => {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  const tone = (f, d, type = 'sine', v = .15, t0 = 0, f2) => {
+    if (!on) return; const c = ac(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d);
+  };
+  return {
+    unlock: ac,
+    tap() { tone(660, .08, 'square', .1); },
+    next() { tone(440, .1, 'triangle', .12); tone(660, .12, 'triangle', .12, .08); },
+    tick() { tone(1000, .05, 'square', .08); },
+    time() { tone(220, .4, 'sawtooth', .14, 0, 90); },
+    go() { [392, 523, 659, 784].forEach((f, i) => tone(f, .15, 'triangle', .14, i * .1)); },
+    win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .22, 'triangle', .16, i * .14)); tone(1318, .5, 'triangle', .14, .6); },
+    toggle() { on = !on; return on; }
+  };
+})();
+
+const $ = id => document.getElementById(id);
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// الوقت يتناسب مع طول السؤال: من 30 إلى 75 ثانية
+const timeFor = it => { const n = (it.d || '').length + it.q.length + it.o.reduce((a, x) => a + x.t.length, 0); return Math.min(75, Math.max(30, 20 + Math.ceil(n / 12))); };
+let items = [], ans = [], cur = 0, tm = null, locked = false, left = 0;
+
+$('ttl').textContent = '🎮 ' + TITLE;
+$('info').textContent = QUESTIONS.length + ' سؤالاً، والوقت لكل سؤال يتناسب مع طوله.';
+
+function start() {
+  Snd.unlock();
+  if (window.MK) MK.ask(begin, LESSON_ID); else begin();
+}
+
+function begin() {
+  Snd.go();
+  items = [];
+  SECTIONS.forEach((_, si) => {   // الأقسام بالترتيب، والخلط داخل كل قسم فقط
+    items = items.concat(shuf(QUESTIONS
+      .map((x, i) => ({ i, s: x.s || 0, d: x.d || '', q: x.q, fix: !!x.fix, o: (x.fix ? (a => a) : shuf)(x.o.map((t, j) => ({ t, n: j + 1 }))) }))
+      .filter(x => x.s === si)));
+  });
+  ans = new Array(QUESTIONS.length).fill("0");
+  cur = 0;
+  $('intro').style.display = 'none';
+  $('game').style.display = 'block';
+  nextQ();
+}
+
+function nextQ() {
+  clearInterval(tm); locked = false;
+  if (cur >= items.length) return end();
+  const it = items[cur], T = timeFor(it);
+  $('cnt').textContent = 'السؤال ' + (cur + 1) + ' من ' + items.length;
+  $('pb').style.width = (cur / items.length * 100) + '%';
+  $('sec').textContent = SECTIONS[it.s] || '';
+  $('sd').textContent = it.d;
+  const q = $('qt'); q.textContent = it.q;
+  q.className = 'q' + (it.q.length > 140 ? ' long' : ''); void q.offsetWidth; q.classList.add('pop');
+  const box = $('ops'); box.innerHTML = '';
+  it.o.forEach((x, k) => {
+    const b = document.createElement('button');
+    b.className = 'op c' + (it.fix ? (x.n === 1 ? 3 : 0) : k % 4); b.textContent = x.t;
+    b.onclick = () => { Snd.tap(); pick(b, String(x.n)); };
+    box.appendChild(b);
+  });
+  left = T; $('tm').textContent = '⏱️ ' + left; $('tm').classList.remove('urgent');
+  const tb = $('tb'); tb.style.transition = 'none'; tb.style.width = '100%'; void tb.offsetWidth;
+  tb.style.transition = 'width ' + T + 's linear'; tb.style.width = '0%';
+  tm = setInterval(() => {
+    left--; $('tm').textContent = '⏱️ ' + Math.max(left, 0);
+    if (left > 0 && left <= 5) { Snd.tick(); $('tm').classList.add('urgent'); }
+    if (left <= 0) { Snd.time(); pick(null, "0"); }
+  }, 1000);
+}
+
+function pick(btn, n) {
+  if (locked) return; locked = true; clearInterval(tm);
+  ans[items[cur].i] = n;            // الإجابة تُحفظ بحسب ترتيب السؤال الأصلي
+  if (btn) btn.classList.add('sel');
+  document.querySelectorAll('.op').forEach(b => b.disabled = true);
+  setTimeout(() => { cur++; if (cur < items.length) Snd.next(); nextQ(); }, 550);
+}
+
+function end() {
+  Snd.win();
+  $('pb').style.width = '100%';
+  $('game').innerHTML = '<div class="big">🏁</div><p class="t">انتهى التقويم! جاري تصحيح إجاباتك...</p>';
+  setTimeout(() => {
+    if (window.MK) MK.finish(LESSON_ID, ans);
+    else $('game').innerHTML += '<p class="t">تعذّر الاتصال بالمنصة، أعد تحميل الصفحة.</p>';
+  }, 900);
+}
+</script>
+</body>
+</html>
